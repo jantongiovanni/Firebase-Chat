@@ -140,8 +140,16 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
     return true
   }
 
-  func sendMessage(withData data: [String: String]) {
-  }
+    func sendMessage(withData data: [String: String]) {
+        var mdata = data
+        mdata[Constants.MessageFields.name] = Auth.auth().currentUser?.displayName
+        if let photoURL = Auth.auth().currentUser?.photoURL {
+            mdata[Constants.MessageFields.photoURL] = photoURL.absoluteString
+        }
+        
+        // Push data to Firebase Database
+        self.ref.child("messages").childByAutoId().setValue(mdata)
+    }
 
   // MARK: - Image Picker
 
