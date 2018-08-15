@@ -60,19 +60,9 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
   }
 
   deinit {
-    if let refHandle = _refHandle {
-        self.ref.child("messages").removeObserver(withHandle: _refHandle)
-    }
   }
 
   func configureDatabase() {
-    ref = Database.database().reference()
-    // Listen for new messages in the Firebase database
-    _refHandle = self.ref.child("messages").observe(.childAdded, with: { [weak self] (snapshot) -> Void in
-        guard let strongSelf = self else { return }
-        strongSelf.messages.append(snapshot)
-        strongSelf.clientTable.insertRows(at: [IndexPath(row: strongSelf.messages.count-1, section: 0)], with: .automatic)
-    })
   }
 
   func configureStorage() {
@@ -113,22 +103,12 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
     return messages.count
   }
 
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        // Dequeue cell
-        let cell = self.clientTable.dequeueReusableCell(withIdentifier: "tableViewCell", for: indexPath)
-        // Unpack message from Firebase DataSnapshot
-        let messageSnapshot = self.messages[indexPath.row]
-        guard let message = messageSnapshot.value as? [String: String] else { return cell }
-        let name = message[Constants.MessageFields.name] ?? ""
-        let text = message[Constants.MessageFields.text] ?? ""
-        cell.textLabel?.text = name + ": " + text
-        cell.imageView?.image = UIImage(named: "ic_account_circle")
-        if let photoURL = message[Constants.MessageFields.photoURL], let URL = URL(string: photoURL),
-            let data = try? Data(contentsOf: URL) {
-            cell.imageView?.image = UIImage(data: data)
-        }
-        return cell
-    }
+  func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    // Dequeue cell
+    let cell = self.clientTable.dequeueReusableCell(withIdentifier: "tableViewCell", for: indexPath)
+
+    return cell
+  }
 
   // UITextViewDelegate protocol methods
   func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -140,16 +120,8 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
     return true
   }
 
-    func sendMessage(withData data: [String: String]) {
-        var mdata = data
-        mdata[Constants.MessageFields.name] = Auth.auth().currentUser?.displayName
-        if let photoURL = Auth.auth().currentUser?.photoURL {
-            mdata[Constants.MessageFields.photoURL] = photoURL.absoluteString
-        }
-        
-        // Push data to Firebase Database
-        self.ref.child("messages").childByAutoId().setValue(mdata)
-    }
+  func sendMessage(withData data: [String: String]) {
+  }
 
   // MARK: - Image Picker
 
@@ -191,13 +163,7 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
   }
 
   @IBAction func signOut(_ sender: UIButton) {
-    let firebaseAuth = Auth.auth()
-    do {
-        try firebaseAuth.signOut()
-        dismiss(animated: true, completion: nil)
-    } catch let signOutError as NSError {
-        print ("Error signing out: \(signOutError.localizedDescription)")
-    }
+    dismiss(animated: true, completion: nil)
   }
 
   func showAlert(withTitle title: String, message: String) {
